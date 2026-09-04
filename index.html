@@ -5,109 +5,228 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CampusFix</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body { background: #f1f5f9; color: #0f172a; padding: 1rem; }
-    header { background: #2563eb; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; }
-    .card { background: white; padding: 1.25rem; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 1.5rem; }
-    label { display: block; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; font-size: 0.9rem; }
-    input, select, textarea { width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
-    button.submit-btn { width: 100%; background: #2563eb; color: white; border: none; padding: 0.75rem; border-radius: 6px; margin-top: 1rem; font-weight: bold; cursor: pointer; }
-    .admin-ticket { border-bottom: 1px solid #e2e8f0; padding: 0.75rem 0; }
-    .admin-ticket:last-child { border-bottom: none; }
-    .ticket-img { max-width: 100%; max-height: 180px; object-fit: cover; border-radius: 6px; margin-top: 0.5rem; }
-    .status-tag { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-    .pending { background: #fef3c7; color: #b45309; }
-    .resolved { background: #d1fae5; color: #065f46; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
+    
+    /* Top Navigation Bar */
+    header {
+      background: #1e293b;
+      color: white;
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .logo { font-size: 1.25rem; font-weight: 700; }
+    .logo span { color: #38bdf8; }
+    
+    .nav-tabs { display: flex; gap: 0.5rem; }
+    .tab-btn {
+      background: #334155;
+      color: white;
+      border: none;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .tab-btn.active { background: #0284c7; }
+
+    /* Main Container */
+    .container { max-width: 600px; margin: 1.5rem auto; padding: 0 1rem; }
+    .card { background: white; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+    
+    h2 { font-size: 1.2rem; margin-bottom: 0.25rem; }
+    p.subtext { font-size: 0.85rem; color: #64748b; margin-bottom: 1rem; }
+
+    /* Form Inputs */
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+    input, select, textarea { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #0284c7; }
+    
+    .btn-submit {
+      width: 100%;
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 1.25rem;
+      cursor: pointer;
+    }
+
+    /* Admin View */
+    .admin-stats { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .stat-box { flex: 1; background: #f1f5f9; padding: 0.75rem; border-radius: 6px; text-align: center; }
+    .stat-num { font-size: 1.2rem; font-weight: 700; color: #0284c7; }
+    .stat-lbl { font-size: 0.75rem; color: #64748b; }
+
+    .ticket { border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; background: #fafafa; }
+    .ticket-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .badge.Pending { background: #fef3c7; color: #b45309; }
+    .badge.Resolved { background: #dcfce7; color: #166534; }
+
+    .ticket-meta { font-size: 0.8rem; color: #64748b; margin: 0.25rem 0; }
+    .ticket-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; margin: 0.5rem 0; border: 1px solid #cbd5e1; }
+    
+    .btn-toggle {
+      background: #e2e8f0;
+      border: none;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+  <!-- Navigation Bar -->
   <header>
-    <h1>CampusFix</h1>
-    <p>Report campus issues with photo evidence</p>
+    <div class="logo">Campus<span>Fix</span></div>
+    <div class="nav-tabs">
+      <button id="tab-student" class="tab-btn active" onclick="showPage('student')">Student Portal</button>
+      <button id="tab-admin" class="tab-btn" onclick="showPage('admin')">Admin Portal</button>
+    </div>
   </header>
 
-  <!-- Submit Issue Form -->
-  <div class="card">
-    <h2>Submit a Complaint</h2>
-    <form id="issueForm">
-      <label for="name">Your Name</label>
-      <input type="text" id="name" required placeholder="e.g. John Doe">
+  <div class="container">
 
-      <label for="location">Location</label>
-      <select id="location" required>
-        <option value="">Select location</option>
-        <option value="Hostel">Hostel</option>
-        <option value="Classroom">Classroom</option>
-        <option value="Laboratory">Laboratory</option>
-        <option value="Cafeteria">Cafeteria</option>
-        <option value="Other">Other</option>
-      </select>
+    <!-- PAGE 1: STUDENT SUBMISSION -->
+    <div id="page-student">
+      <div class="card">
+        <h2>Report Campus Issue</h2>
+        <p class="subtext">Upload a picture of any broken equipment or maintenance issue.</p>
 
-      <label for="room">Room / Block Details</label>
-      <input type="text" id="room" required placeholder="e.g. Room 204, Block B">
+        <form id="issueForm">
+          <label>Your Full Name</label>
+          <input type="text" id="name" required placeholder="e.g. Rahul Sharma" />
 
-      <label for="issue">Issue Description</label>
-      <textarea id="issue" rows="3" required placeholder="Explain what is broken or leaking..."></textarea>
+          <label>Location Area</label>
+          <select id="location" required>
+            <option value="">Select location</option>
+            <option value="Hostel">Hostel / Dormitory</option>
+            <option value="Classroom">Classroom</option>
+            <option value="Laboratory">Laboratory</option>
+            <option value="Cafeteria">Cafeteria / Mess</option>
+            <option value="Library">Library</option>
+            <option value="Washroom">Washroom</option>
+            <option value="Other">Other Campus Area</option>
+          </select>
 
-      <label for="photo">Upload Photo</label>
-      <input type="file" id="photo" accept="image/*" required>
+          <label>Specific Room / Block Number</label>
+          <input type="text" id="room" required placeholder="e.g. Block A, Room 204" />
 
-      <button type="submit" class="submit-btn">Submit Complaint</button>
-    </form>
-  </div>
+          <label>Issue Description</label>
+          <textarea id="desc" rows="3" required placeholder="Describe the problem in detail..."></textarea>
 
-  <!-- Admin Complaints View -->
-  <div class="card">
-    <h2>Admin Portal: Active Issues</h2>
-    <div id="ticketsList" style="margin-top: 1rem;">
-      <p style="color: #64748b;">No issues reported yet.</p>
+          <label>Attach Photo Evidence</label>
+          <input type="file" id="photo" accept="image/*" required />
+
+          <button type="submit" class="btn-submit">Submit to Administration</button>
+        </form>
+      </div>
     </div>
+
+    <!-- PAGE 2: ADMIN DASHBOARD -->
+    <div id="page-admin" style="display: none;">
+      
+      <!-- Passcode prompt shown first -->
+      <div id="admin-auth" class="card">
+        <h2>Administrator Login</h2>
+        <p class="subtext">Enter the administrator access key to view complaints.</p>
+        <input type="password" id="adminKey" placeholder="Enter key (Default: admin123)" />
+        <button type="button" class="btn-submit" onclick="loginAdmin()">Verify & Open</button>
+      </div>
+
+      <!-- Dashboard content shown once authenticated -->
+      <div id="admin-dashboard" style="display: none;">
+        <div class="admin-stats">
+          <div class="stat-box">
+            <div class="stat-num" id="stat-total">0</div>
+            <div class="stat-lbl">Total</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="stat-pending" style="color: #b45309;">0</div>
+            <div class="stat-lbl">Pending</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="stat-resolved" style="color: #166534;">0</div>
+            <div class="stat-lbl">Resolved</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Active Reports</h2>
+          <div id="ticketsList" style="margin-top: 1rem;">
+            <p class="subtext">No complaints submitted yet.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   </div>
 
   <script>
-    const form = document.getElementById('issueForm');
-    const ticketsList = document.getElementById('ticketsList');
     let issues = JSON.parse(localStorage.getItem('cf_issues')) || [];
+    let isAdminUnlocked = false;
 
-    function renderIssues() {
-      if (issues.length === 0) {
-        ticketsList.innerHTML = '<p style="color: #64748b;">No issues reported yet.</p>';
-        return;
+    // View Switching
+    function showPage(page) {
+      document.getElementById('page-student').style.display = (page === 'student') ? 'block' : 'none';
+      document.getElementById('page-admin').style.display = (page === 'admin') ? 'block' : 'none';
+
+      document.getElementById('tab-student').classList.toggle('active', page === 'student');
+      document.getElementById('tab-admin').classList.toggle('active', page === 'admin');
+
+      if (page === 'admin' && isAdminUnlocked) {
+        renderAdminDashboard();
       }
-      ticketsList.innerHTML = issues.map((item, index) => `
-        <div class="admin-ticket">
-          <div><strong>${item.location} - ${item.room}</strong></div>
-          <p style="margin: 0.25rem 0;">${item.issue}</p>
-          <small>Reported by: ${item.name} &bull; <span class="status-tag ${item.status === 'Resolved' ? 'resolved' : 'pending'}">${item.status}</span></small>
-          ${item.photo ? `<br><img class="ticket-img" src="${item.photo}">` : ''}
-          <div style="margin-top: 0.5rem;">
-            <button onclick="toggleStatus(${index})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer;">
-              Mark as ${item.status === 'Resolved' ? 'Pending' : 'Resolved'}
-            </button>
-          </div>
-        </div>
-      `).join('');
     }
 
-    form.addEventListener('submit', function(e) {
+    // Passcode check
+    function loginAdmin() {
+      const pass = document.getElementById('adminKey').value;
+      if (pass === 'admin123') {
+        isAdminUnlocked = true;
+        document.getElementById('admin-auth').style.display = 'none';
+        document.getElementById('admin-dashboard').style.display = 'block';
+        renderAdminDashboard();
+      } else {
+        alert('Incorrect passcode! (Default is admin123)');
+      }
+    }
+
+    // Student Form Submission
+    document.getElementById('issueForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const file = document.getElementById('photo').files[0];
       const reader = new FileReader();
 
-      reader.onload = function(event) {
-        issues.unshift({
+      reader.onload = function(evt) {
+        const item = {
+          id: Date.now(),
           name: document.getElementById('name').value,
           location: document.getElementById('location').value,
           room: document.getElementById('room').value,
-          issue: document.getElementById('issue').value,
-          photo: event.target.result,
-          status: 'Pending'
-        });
+          desc: document.getElementById('desc').value,
+          photo: evt.target.result,
+          status: 'Pending',
+          time: new Date().toLocaleDateString()
+        };
+
+        issues.unshift(item);
         localStorage.setItem('cf_issues', JSON.stringify(issues));
-        form.reset();
-        renderIssues();
-        alert('Complaint submitted!');
+        alert('Complaint successfully sent to administration!');
+        document.getElementById('issueForm').reset();
       };
 
       if (file) {
@@ -115,13 +234,44 @@
       }
     });
 
-    window.toggleStatus = function(index) {
-      issues[index].status = issues[index].status === 'Resolved' ? 'Pending' : 'Resolved';
-      localStorage.setItem('cf_issues', JSON.stringify(issues));
-      renderIssues();
-    };
+    // Admin Dashboard Render
+    function renderAdminDashboard() {
+      const list = document.getElementById('ticketsList');
+      const pendingCount = issues.filter(i => i.status === 'Pending').length;
+      const resolvedCount = issues.filter(i => i.status === 'Resolved').length;
 
-    renderIssues();
+      document.getElementById('stat-total').innerText = issues.length;
+      document.getElementById('stat-pending').innerText = pendingCount;
+      document.getElementById('stat-resolved').innerText = resolvedCount;
+
+      if (issues.length === 0) {
+        list.innerHTML = '<p class="subtext">No complaints submitted yet.</p>';
+        return;
+      }
+
+      list.innerHTML = issues.map((item, idx) => `
+        <div class="ticket">
+          <div class="ticket-header">
+            <strong>${item.location} &bull; ${item.room}</strong>
+            <span class="badge ${item.status}">${item.status}</span>
+          </div>
+          <div class="ticket-meta">Reported by ${item.name} on ${item.time}</div>
+          <p style="font-size: 0.9rem; margin: 0.5rem 0;">${item.desc}</p>
+          ${item.photo ? `<img src="${item.photo}" class="ticket-img" alt="Evidence" />` : ''}
+          <div style="margin-top: 0.5rem;">
+            <button class="btn-toggle" onclick="toggleStatus(${idx})">
+              Mark as ${item.status === 'Resolved' ? 'Pending' : 'Resolved'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleStatus(idx) {
+      issues[idx].status = issues[idx].status === 'Resolved' ? 'Pending' : 'Resolved';
+      localStorage.setItem('cf_issues', JSON.stringify(issues));
+      renderAdminDashboard();
+    }
   </script>
 </body>
 </html>
