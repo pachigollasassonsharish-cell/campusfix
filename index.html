@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CampusFix</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background: #f1f5f9; color: #0f172a; padding: 1rem; }
+    header { background: #2563eb; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; }
+    .card { background: white; padding: 1.25rem; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 1.5rem; }
+    label { display: block; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; font-size: 0.9rem; }
+    input, select, textarea { width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
+    button.submit-btn { width: 100%; background: #2563eb; color: white; border: none; padding: 0.75rem; border-radius: 6px; margin-top: 1rem; font-weight: bold; cursor: pointer; }
+    .admin-ticket { border-bottom: 1px solid #e2e8f0; padding: 0.75rem 0; }
+    .admin-ticket:last-child { border-bottom: none; }
+    .ticket-img { max-width: 100%; max-height: 180px; object-fit: cover; border-radius: 6px; margin-top: 0.5rem; }
+    .status-tag { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+    .pending { background: #fef3c7; color: #b45309; }
+    .resolved { background: #d1fae5; color: #065f46; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>CampusFix</h1>
+    <p>Report campus issues with photo evidence</p>
+  </header>
+
+  <!-- Submit Issue Form -->
+  <div class="card">
+    <h2>Submit a Complaint</h2>
+    <form id="issueForm">
+      <label for="name">Your Name</label>
+      <input type="text" id="name" required placeholder="e.g. John Doe">
+
+      <label for="location">Location</label>
+      <select id="location" required>
+        <option value="">Select location</option>
+        <option value="Hostel">Hostel</option>
+        <option value="Classroom">Classroom</option>
+        <option value="Laboratory">Laboratory</option>
+        <option value="Cafeteria">Cafeteria</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="room">Room / Block Details</label>
+      <input type="text" id="room" required placeholder="e.g. Room 204, Block B">
+
+      <label for="issue">Issue Description</label>
+      <textarea id="issue" rows="3" required placeholder="Explain what is broken or leaking..."></textarea>
+
+      <label for="photo">Upload Photo</label>
+      <input type="file" id="photo" accept="image/*" required>
+
+      <button type="submit" class="submit-btn">Submit Complaint</button>
+    </form>
+  </div>
+
+  <!-- Admin Complaints View -->
+  <div class="card">
+    <h2>Admin Portal: Active Issues</h2>
+    <div id="ticketsList" style="margin-top: 1rem;">
+      <p style="color: #64748b;">No issues reported yet.</p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('issueForm');
+    const ticketsList = document.getElementById('ticketsList');
+    let issues = JSON.parse(localStorage.getItem('cf_issues')) || [];
+
+    function renderIssues() {
+      if (issues.length === 0) {
+        ticketsList.innerHTML = '<p style="color: #64748b;">No issues reported yet.</p>';
+        return;
+      }
+      ticketsList.innerHTML = issues.map((item, index) => `
+        <div class="admin-ticket">
+          <div><strong>${item.location} - ${item.room}</strong></div>
+          <p style="margin: 0.25rem 0;">${item.issue}</p>
+          <small>Reported by: ${item.name} &bull; <span class="status-tag ${item.status === 'Resolved' ? 'resolved' : 'pending'}">${item.status}</span></small>
+          ${item.photo ? `<br><img class="ticket-img" src="${item.photo}">` : ''}
+          <div style="margin-top: 0.5rem;">
+            <button onclick="toggleStatus(${index})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer;">
+              Mark as ${item.status === 'Resolved' ? 'Pending' : 'Resolved'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const file = document.getElementById('photo').files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        issues.unshift({
+          name: document.getElementById('name').value,
+          location: document.getElementById('location').value,
+          room: document.getElementById('room').value,
+          issue: document.getElementById('issue').value,
+          photo: event.target.result,
+          status: 'Pending'
+        });
+        localStorage.setItem('cf_issues', JSON.stringify(issues));
+        form.reset();
+        renderIssues();
+        alert('Complaint submitted!');
+      };
+
+      if (file) {
+        reader.readAsDataURL(file);
+      }
+    });
+
+    window.toggleStatus = function(index) {
+      issues[index].status = issues[index].status === 'Resolved' ? 'Pending' : 'Resolved';
+      localStorage.setItem('cf_issues', JSON.stringify(issues));
+      renderIssues();
+    };
+
+    renderIssues();
+  </script>
+</body>
+</html>
