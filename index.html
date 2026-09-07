@@ -18,7 +18,6 @@
       
       /* Sun Yellow-Orange Accents */
       --sun-amber: #f59e0b;
-      --sun-amber-hover: #d97706;
       --sun-gold: #fbbf24;
       --sun-glow: rgba(245, 158, 11, 0.15);
       
@@ -53,7 +52,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      padding: 1rem 1.5rem;
+      padding: 0.85rem 1.5rem;
     }
 
     .nav-container {
@@ -91,11 +90,48 @@
       font-size: 1rem;
     }
 
-    .main-layout {
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(17, 34, 64, 0.6);
+      padding: 0.35rem;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn.active {
+      background: var(--bg-card);
+      color: var(--sun-gold);
+      border: 1px solid var(--navy-border);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .view-panel {
+      display: none;
       max-width: 1200px;
       width: 100%;
       margin: 2rem auto;
       padding: 0 1.5rem;
+    }
+
+    .view-panel.active {
+      display: block;
+    }
+
+    /* Portal Grid Layout */
+    .portal-grid {
       display: grid;
       grid-template-columns: 360px 1fr;
       gap: 2rem;
@@ -103,12 +139,11 @@
     }
 
     @media (max-width: 900px) {
-      .main-layout {
+      .portal-grid {
         grid-template-columns: 1fr;
       }
     }
 
-    /* Cards */
     .card {
       background: var(--bg-card);
       border: 1px solid var(--navy-border);
@@ -127,11 +162,6 @@
       color: var(--text-main);
     }
 
-    .card h2 span {
-      color: var(--sun-gold);
-    }
-
-    /* Form */
     .form-group {
       margin-bottom: 1rem;
     }
@@ -188,42 +218,12 @@
       transform: translateY(-1px);
     }
 
-    /* Stats Bar */
-    .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .stat-pill {
-      background: var(--bg-card);
-      border: 1px solid var(--navy-border);
-      padding: 1rem;
-      border-radius: 12px;
-      text-align: center;
-    }
-
-    .stat-pill .num {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--sun-gold);
-    }
-
-    .stat-pill .label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    /* Complaints List */
+    /* Feed Components */
     .complaints-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      margin-bottom: 1.25rem;
     }
 
     .feed-container {
@@ -271,7 +271,7 @@
 
     .badge-pending {
       background: rgba(245, 158, 11, 0.15);
-      color: var(--sun-amber);
+      color: var(--status-pending);
       border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
@@ -329,6 +329,114 @@
       color: var(--sun-gold);
     }
 
+    /* Statistics View */
+    .stats-header-banner {
+      margin-bottom: 2rem;
+    }
+
+    .stats-header-banner h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .stats-header-banner p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 0.25rem;
+    }
+
+    .stats-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+    }
+
+    .stat-box.total::before { background: var(--text-muted); }
+    .stat-box.pending::before { background: var(--status-pending); }
+    .stat-box.progress::before { background: var(--status-progress); }
+    .stat-box.resolved::before { background: var(--status-resolved); }
+
+    .stat-box .title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .stat-box .value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-top: 0.4rem;
+      color: var(--text-main);
+    }
+
+    .stat-box .subtext {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+
+    .analytics-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 800px) {
+      .analytics-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Progress and Category Bars */
+    .bar-row {
+      margin-bottom: 1.25rem;
+    }
+
+    .bar-row-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .progress-track {
+      background: rgba(10, 25, 47, 0.7);
+      border-radius: 8px;
+      height: 10px;
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--navy-border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.4s ease;
+    }
+
     .empty-state {
       text-align: center;
       padding: 3rem 1rem;
@@ -338,150 +446,234 @@
 </head>
 <body>
 
-  <!-- Top Navbar -->
+  <!-- Top Navigation -->
   <header>
     <div class="nav-container">
       <a href="#" class="brand">
         <div class="brand-icon">CF</div>
         Campus<span class="brand-accent">Fix</span>
       </a>
-      <span style="font-size: 0.85rem; color: var(--text-muted);">Internal Issue Portal</span>
+
+      <!-- Page Switcher Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-btn active" onclick="switchView('portal')">Tickets</button>
+        <button class="nav-btn" onclick="switchView('stats')">Analytics & Stats</button>
+      </nav>
     </div>
   </header>
 
-  <!-- Content -->
-  <main class="main-layout">
-    
-    <!-- Left Column: Submit Complaint -->
-    <section class="card">
-      <h2><span>⚡</span> Report an Issue</h2>
-      <form id="issueForm">
-        <div class="form-group">
-          <label for="title">Title / Problem summary</label>
-          <input type="text" id="title" placeholder="e.g. Water leak in Block B 2nd floor" required>
-        </div>
+  <!-- VIEW 1: Main Tickets / Complaint Form -->
+  <main id="portalView" class="view-panel active">
+    <div class="portal-grid">
+      
+      <!-- Issue Form -->
+      <section class="card">
+        <h2><span>⚡</span> Report an Issue</h2>
+        <form id="issueForm">
+          <div class="form-group">
+            <label for="title">Problem Summary</label>
+            <input type="text" id="title" placeholder="e.g. Water leak in Block B 2nd floor" required>
+          </div>
 
-        <div class="form-group">
-          <label for="category">Category</label>
-          <select id="category" required>
-            <option value="Hostel & Facilities">Hostel & Facilities</option>
-            <option value="Electricity / AC">Electricity / AC</option>
-            <option value="Lab & IT Equipment">Lab & IT Equipment</option>
-            <option value="Cleanliness & Hygiene">Cleanliness & Hygiene</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" required>
+              <option value="Hostel & Facilities">Hostel & Facilities</option>
+              <option value="Electricity / AC">Electricity / AC</option>
+              <option value="Lab & IT Equipment">Lab & IT Equipment</option>
+              <option value="Cleanliness & Hygiene">Cleanliness & Hygiene</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="location">Location / Room Number</label>
-          <input type="text" id="location" placeholder="e.g. Library 3rd Floor, Lab 4" required>
-        </div>
+          <div class="form-group">
+            <label for="location">Location / Room</label>
+            <input type="text" id="location" placeholder="e.g. Library 3rd Floor, Lab 4" required>
+          </div>
 
-        <div class="form-group">
-          <label for="description">Detailed Description</label>
-          <textarea id="description" placeholder="Provide details to help the maintenance crew fix it faster..."></textarea>
-        </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="Provide details to assist the maintenance staff..."></textarea>
+          </div>
 
-        <button type="submit" class="btn">Submit Ticket</button>
-      </form>
-    </section>
+          <button type="submit" class="btn">Submit Ticket</button>
+        </form>
+      </section>
 
-    <!-- Right Column: Stats & Issues Feed -->
-    <section>
-      <!-- Stats Counters -->
-      <div class="stats-bar">
-        <div class="stat-pill">
-          <div class="num" id="statTotal">0</div>
-          <div class="label">Total Reported</div>
-        </div>
-        <div class="stat-pill">
-          <div class="num" id="statPending" style="color: var(--sun-amber);">0</div>
-          <div class="label">Pending</div>
-        </div>
-        <div class="stat-pill">
-          <div class="num" id="statResolved" style="color: var(--status-resolved);">0</div>
-          <div class="label">Resolved</div>
-        </div>
-      </div>
-
-      <!-- Feed Container -->
-      <div class="card">
+      <!-- Issues Feed -->
+      <section class="card">
         <div class="complaints-header">
-          <h2><span>📌</span> Recent Reports</h2>
-          <span id="feedCounter" style="font-size: 0.85rem; color: var(--text-muted);">Showing 0 issues</span>
+          <h2><span>📌</span> Feed & Recent Reports</h2>
+          <span id="feedCounter" style="font-size: 0.85rem; color: var(--text-muted);">0 issues</span>
         </div>
-        
         <div id="complaintsFeed" class="feed-container">
           <!-- Dynamically populated -->
         </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- VIEW 2: Dedicated Statistics Page -->
+  <main id="statsView" class="view-panel">
+    
+    <div class="stats-header-banner">
+      <h1>Campus Analytics & Resolution Rates</h1>
+      <p>Real-time status overview of reported issues, progress, and completed maintenance tasks.</p>
+    </div>
+
+    <!-- 4 Status Metric Cards -->
+    <div class="stats-grid-4">
+      <div class="stat-box total">
+        <div class="title">Total Reported</div>
+        <div class="value" id="statsTotal">0</div>
+        <div class="subtext">All submitted complaints</div>
       </div>
-    </section>
+      <div class="stat-box pending">
+        <div class="title">Pending Review</div>
+        <div class="value" id="statsPending" style="color: var(--status-pending);">0</div>
+        <div class="subtext">Awaiting team triage</div>
+      </div>
+      <div class="stat-box progress">
+        <div class="title">In Progress</div>
+        <div class="value" id="statsProgress" style="color: var(--status-progress);">0</div>
+        <div class="subtext">Under active maintenance</div>
+      </div>
+      <div class="stat-box resolved">
+        <div class="title">Completed / Fixed</div>
+        <div class="value" id="statsResolved" style="color: var(--status-resolved);">0</div>
+        <div class="subtext">Successfully closed tickets</div>
+      </div>
+    </div>
+
+    <!-- Analytic Breakdown Columns -->
+    <div class="analytics-split">
+      <!-- Resolution Pipeline -->
+      <div class="card">
+        <h2><span>📊</span> Lifecycle Breakdown</h2>
+        <div style="margin-top: 1.5rem;">
+          <div class="bar-row">
+            <div class="bar-row-info">
+              <span>Completed / Fixed</span>
+              <span id="pctResolved">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="barResolved" class="progress-fill" style="background: var(--status-resolved); width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="bar-row">
+            <div class="bar-row-info">
+              <span>In Progress</span>
+              <span id="pctProgress">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="barProgress" class="progress-fill" style="background: var(--status-progress); width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="bar-row">
+            <div class="bar-row-info">
+              <span>Pending</span>
+              <span id="pctPending">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="barPending" class="progress-fill" style="background: var(--status-pending); width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div class="card">
+        <h2><span>🏷️</span> Issues by Category</h2>
+        <div id="categoryStatsContainer" style="margin-top: 1.5rem;">
+          <!-- Dynamically populated categories -->
+        </div>
+      </div>
+    </div>
 
   </main>
 
   <script>
-    // Initial sample issues if storage is empty
     const defaultData = [
       {
         id: 1,
-        title: "Projector not displaying HDMI output",
+        title: "Projector flickering during morning classes",
         category: "Lab & IT Equipment",
         location: "Seminar Hall 2",
-        description: "HDMI port is loose, flickering constantly during morning lectures.",
+        description: "HDMI port is unstable and loses display signal periodically.",
         status: "in-progress",
-        votes: 8,
-        date: "Today"
+        votes: 9
       },
       {
         id: 2,
-        title: "Water dispenser not cooling",
+        title: "Block C water dispenser warm",
         category: "Hostel & Facilities",
         location: "Block C, 1st floor corridor",
-        description: "The cooler has been blowing warm air since yesterday afternoon.",
+        description: "Cooler stops refrigerating water during afternoon hours.",
         status: "pending",
-        votes: 14,
-        date: "Yesterday"
+        votes: 14
+      },
+      {
+        id: 3,
+        title: "Broken window latch replaced",
+        category: "Hostel & Facilities",
+        location: "Room 304, Boys Hostel",
+        description: "Latch would not close during windy rains. Fixed by carpentry crew.",
+        status: "resolved",
+        votes: 5
       }
     ];
 
     let issues = JSON.parse(localStorage.getItem('campusfix_data')) || defaultData;
 
+    function switchView(target) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+
+      if (target === 'portal') {
+        document.getElementById('portalView').classList.add('active');
+        document.querySelectorAll('.nav-btn')[0].classList.add('active');
+      } else {
+        document.getElementById('statsView').classList.add('active');
+        document.querySelectorAll('.nav-btn')[1].classList.add('active');
+        renderAnalytics();
+      }
+    }
+
     function saveAndRender() {
       localStorage.setItem('campusfix_data', JSON.stringify(issues));
       renderFeed();
-      renderStats();
-    }
-
-    function renderStats() {
-      document.getElementById('statTotal').innerText = issues.length;
-      document.getElementById('statPending').innerText = issues.filter(i => i.status === 'pending').length;
-      document.getElementById('statResolved').innerText = issues.filter(i => i.status === 'resolved').length;
-      document.getElementById('feedCounter').innerText = `${issues.length} active tickets`;
+      renderAnalytics();
     }
 
     function renderFeed() {
       const container = document.getElementById('complaintsFeed');
+      document.getElementById('feedCounter').innerText = `${issues.length} tickets`;
+
       if (issues.length === 0) {
-        container.innerHTML = `<div class="empty-state">No campus complaints logged yet. Everything is quiet!</div>`;
+        container.innerHTML = `<div class="empty-state">No campus complaints logged yet.</div>`;
         return;
       }
 
       container.innerHTML = issues.map((item) => {
         let badgeClass = 'badge-pending';
-        let badgeLabel = 'Pending';
+        let badgeText = 'Pending';
+
         if (item.status === 'in-progress') {
           badgeClass = 'badge-progress';
-          badgeLabel = 'In Progress';
+          badgeText = 'In Progress';
         } else if (item.status === 'resolved') {
           badgeClass = 'badge-resolved';
-          badgeLabel = 'Resolved';
+          badgeText = 'Completed / Fixed';
         }
 
         return `
           <div class="complaint-item">
             <div class="item-top">
               <span class="item-title">${escapeHtml(item.title)}</span>
-              <span class="badge ${badgeClass}">${badgeLabel}</span>
+              <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
             <p class="item-desc">${escapeHtml(item.description)}</p>
             <div class="item-footer">
@@ -492,6 +684,61 @@
               <button class="upvote-btn" onclick="upvote(${item.id})">
                 ▲ <span>${item.votes}</span>
               </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAnalytics() {
+      const total = issues.length;
+      const pending = issues.filter(i => i.status === 'pending').length;
+      const progress = issues.filter(i => i.status === 'in-progress').length;
+      const resolved = issues.filter(i => i.status === 'resolved').length;
+
+      // Update counters
+      document.getElementById('statsTotal').innerText = total;
+      document.getElementById('statsPending').innerText = pending;
+      document.getElementById('statsProgress').innerText = progress;
+      document.getElementById('statsResolved').innerText = resolved;
+
+      // Update resolution rate percentages
+      const calcPct = (count) => total === 0 ? 0 : Math.round((count / total) * 100);
+
+      const pPct = calcPct(pending);
+      const prPct = calcPct(progress);
+      const rPct = calcPct(resolved);
+
+      document.getElementById('pctPending').innerText = `${pPct}% (${pending})`;
+      document.getElementById('pctProgress').innerText = `${prPct}% (${progress})`;
+      document.getElementById('pctResolved').innerText = `${rPct}% (${resolved})`;
+
+      document.getElementById('barPending').style.width = `${pPct}%`;
+      document.getElementById('barProgress').style.width = `${prPct}%`;
+      document.getElementById('barResolved').style.width = `${rPct}%`;
+
+      // Calculate Category Distribution
+      const catCounts = {};
+      issues.forEach(i => {
+        catCounts[i.category] = (catCounts[i.category] || 0) + 1;
+      });
+
+      const catContainer = document.getElementById('categoryStatsContainer');
+      if (total === 0) {
+        catContainer.innerHTML = `<div class="empty-state" style="padding:1rem;">No category data</div>`;
+        return;
+      }
+
+      catContainer.innerHTML = Object.entries(catCounts).map(([cat, count]) => {
+        const pct = Math.round((count / total) * 100);
+        return `
+          <div class="bar-row">
+            <div class="bar-row-info">
+              <span>${escapeHtml(cat)}</span>
+              <span style="color: var(--sun-gold);">${count} (${pct}%)</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="background: var(--sun-amber); width: ${pct}%;"></div>
             </div>
           </div>
         `;
@@ -516,8 +763,7 @@
         location: document.getElementById('location').value.trim(),
         description: document.getElementById('description').value.trim(),
         status: 'pending',
-        votes: 1,
-        date: "Just now"
+        votes: 1
       };
 
       issues.unshift(newIssue);
@@ -529,8 +775,9 @@
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    // First paint
+    // Initial render
     saveAndRender();
   </script>
 </body>
 </html>
+
