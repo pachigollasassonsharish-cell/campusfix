@@ -164,7 +164,7 @@
       max-width: 1200px;
       width: 100%;
       margin: 2rem auto;
-      padding: 0 1.5rem 6rem; /* extra bottom padding so content isn't blocked by emergency button */
+      padding: 0 1.5rem 6rem;
     }
 
     .view-panel.active {
@@ -227,7 +227,7 @@
       border: 1px solid var(--navy-border);
     }
 
-    /* Portal Grid Layout */
+    /* Portal Grid */
     .portal-grid {
       display: grid;
       grid-template-columns: 380px 1fr;
@@ -291,6 +291,49 @@
     textarea {
       resize: vertical;
       min-height: 80px;
+    }
+
+    /* File upload box */
+    .file-upload-box {
+      border: 2px dashed var(--navy-border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(10, 25, 47, 0.4);
+      transition: border-color 0.2s ease;
+    }
+
+    .file-upload-box:hover {
+      border-color: var(--sun-amber);
+    }
+
+    .image-preview-container {
+      display: none;
+      margin-top: 0.75rem;
+      position: relative;
+    }
+
+    .preview-thumb {
+      width: 100%;
+      max-height: 160px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--navy-border);
+    }
+
+    .remove-img-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(10, 25, 47, 0.85);
+      color: var(--danger);
+      border: 1px solid var(--navy-border);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 700;
     }
 
     .btn {
@@ -384,6 +427,25 @@
       line-height: 1.45;
     }
 
+    /* Feed card image */
+    .item-attachment {
+      margin-top: 0.3rem;
+    }
+
+    .item-attachment-img {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+      cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    .item-attachment-img:hover {
+      filter: brightness(1.1);
+    }
+
     .item-footer {
       display: flex;
       justify-content: space-between;
@@ -447,7 +509,7 @@
       color: var(--sun-gold);
     }
 
-    /* Stats Grid */
+    /* Stats */
     .stats-header-banner {
       margin-bottom: 2rem;
     }
@@ -557,7 +619,41 @@
       color: var(--text-muted);
     }
 
-    /* Floating Emergency Helpdesk (Bottom-Right) */
+    /* Lightbox Modal */
+    .lightbox-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 25, 47, 0.95);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .lightbox-modal.active {
+      display: flex;
+    }
+
+    .lightbox-modal img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 12px;
+      border: 1px solid var(--navy-border);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 2rem;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 2rem;
+      cursor: pointer;
+    }
+
+    /* Floating Emergency Helpdesk */
     .emergency-wrapper {
       position: fixed;
       bottom: 1.75rem;
@@ -582,7 +678,6 @@
       align-items: center;
       gap: 0.5rem;
       transition: all 0.25s ease;
-      position: relative;
     }
 
     .emergency-trigger-btn:hover {
@@ -590,7 +685,6 @@
       box-shadow: 0 12px 30px rgba(245, 158, 11, 0.5);
     }
 
-    /* Radar ring effect */
     .pulse-dot {
       width: 10px;
       height: 10px;
@@ -602,15 +696,9 @@
     }
 
     @keyframes pulse-ring {
-      0% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-      }
-      70% {
-        box-shadow: 0 0 0 9px rgba(239, 68, 68, 0);
-      }
-      100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-      }
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 9px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
     .emergency-card {
@@ -622,22 +710,10 @@
       padding: 1.25rem;
       box-shadow: 0 20px 45px rgba(2, 12, 27, 0.85);
       margin-bottom: 0.85rem;
-      animation: floatUp 0.2s ease-out forwards;
     }
 
     .emergency-card.show {
       display: block;
-    }
-
-    @keyframes floatUp {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
     }
 
     .emergency-header {
@@ -664,7 +740,6 @@
       color: var(--text-muted);
       cursor: pointer;
       font-size: 1.1rem;
-      line-height: 1;
     }
 
     .emergency-list {
@@ -728,13 +803,11 @@
       </a>
 
       <div class="nav-right">
-        <!-- Navigation Switcher -->
         <nav class="nav-tabs">
           <button class="nav-btn active" onclick="switchView('portal')">Tickets</button>
           <button class="nav-btn" onclick="switchView('stats')">Analytics & Stats</button>
         </nav>
 
-        <!-- Current User Status / Logout -->
         <div id="currentUserPill" class="user-pill" style="display: none;">
           <span id="roleBadge" class="user-role-tag">Role</span>
           <span id="userDisplayName" style="font-weight: 600;">user</span>
@@ -747,8 +820,6 @@
   <!-- Login Modal Overlay -->
   <div id="authModalOverlay" class="auth-overlay">
     <div class="auth-modal">
-      
-      <!-- Role Switcher -->
       <div class="auth-switcher">
         <button class="auth-tab active" id="tabStudent" onclick="switchAuthTab('student')">Student Login</button>
         <button class="auth-tab" id="tabAdmin" onclick="switchAuthTab('admin')">Admin Login</button>
@@ -813,7 +884,6 @@
 
         <button type="submit" class="btn" style="margin-top: 1rem;">Login as Admin</button>
       </form>
-
     </div>
   </div>
 
@@ -821,7 +891,7 @@
   <main id="portalView" class="view-panel active">
     <div class="portal-grid">
       
-      <!-- Issue Form (Visible to Students) -->
+      <!-- Issue Form with Photo Upload -->
       <section class="card" id="submitIssueCard">
         <h2><span>⚡</span> Report an Issue</h2>
         <form id="issueForm">
@@ -844,6 +914,21 @@
           <div class="form-group">
             <label for="location">Location / Room</label>
             <input type="text" id="location" placeholder="e.g. Block C Room 204 or Lab 3" required>
+          </div>
+
+          <!-- Photo Upload Field -->
+          <div class="form-group">
+            <label>Attach Photo of Issue (Optional)</label>
+            <div class="file-upload-box" onclick="document.getElementById('issuePhotoInput').click()">
+              <span style="font-size: 1.3rem;">📷</span>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Click to snap a picture or upload</p>
+              <input type="file" id="issuePhotoInput" accept="image/*" style="display: none;" onchange="handleImageSelected(this)">
+            </div>
+            
+            <div id="imagePreviewContainer" class="image-preview-container">
+              <img id="imagePreview" class="preview-thumb" alt="Preview">
+              <button type="button" class="remove-img-btn" onclick="clearImagePreview()">✕ Remove</button>
+            </div>
           </div>
 
           <div class="form-group">
@@ -871,13 +956,11 @@
 
   <!-- VIEW 2: Dedicated Statistics Page -->
   <main id="statsView" class="view-panel">
-    
     <div class="stats-header-banner">
       <h1>Campus Analytics & Resolution Rates</h1>
       <p>Real-time status overview of reported issues, progress, and completed maintenance tasks.</p>
     </div>
 
-    <!-- 4 Status Metric Cards -->
     <div class="stats-grid-4">
       <div class="stat-box total">
         <div class="title">Total Reported</div>
@@ -901,7 +984,6 @@
       </div>
     </div>
 
-    <!-- Breakdown Columns -->
     <div class="analytics-split">
       <div class="card">
         <h2><span>📊</span> Lifecycle Breakdown</h2>
@@ -940,24 +1022,25 @@
 
       <div class="card">
         <h2><span>🏷️</span> Issues by Category</h2>
-        <div id="categoryStatsContainer" style="margin-top: 1.5rem;">
-          <!-- Dynamically populated -->
-        </div>
+        <div id="categoryStatsContainer" style="margin-top: 1.5rem;"></div>
       </div>
     </div>
-
   </main>
+
+  <!-- Lightbox Modal for Full Image View -->
+  <div id="lightboxModal" class="lightbox-modal" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="Full preview" onclick="event.stopPropagation()">
+  </div>
 
   <!-- FLOATING EMERGENCY CONTACT WIDGET (BOTTOM-RIGHT) -->
   <div class="emergency-wrapper">
-    <!-- Popover Card -->
     <div id="emergencyCard" class="emergency-card">
       <div class="emergency-header">
         <h3><span>🚨</span> Emergency Helplines</h3>
         <button class="emergency-close" onclick="toggleEmergencyCard()">✕</button>
       </div>
       <div class="emergency-list">
-        <!-- Campus Security -->
         <a href="tel:9111223344" class="emergency-item">
           <div class="item-service">
             <span class="name">Campus Security</span>
@@ -966,7 +1049,6 @@
           <span class="item-number">📞 +91 91112 23344</span>
         </a>
 
-        <!-- Campus Medical / Ambulance -->
         <a href="tel:108" class="emergency-item">
           <div class="item-service">
             <span class="name">Campus Health / Ambulance</span>
@@ -975,7 +1057,6 @@
           <span class="item-number">📞 108 / 102</span>
         </a>
 
-        <!-- National Emergency Support -->
         <a href="tel:112" class="emergency-item">
           <div class="item-service">
             <span class="name">National Emergency Support</span>
@@ -986,7 +1067,6 @@
       </div>
     </div>
 
-    <!-- Floating Trigger Button -->
     <button class="emergency-trigger-btn" onclick="toggleEmergencyCard()">
       <span class="pulse-dot"></span>
       <span>🚨 Emergency Contact</span>
@@ -994,7 +1074,8 @@
   </div>
 
   <script>
-    // Initial dummy data
+    let currentUploadedImageBase64 = null;
+
     const defaultData = [
       {
         id: 1,
@@ -1004,7 +1085,8 @@
         description: "HDMI cord connector is damaged causing screen flicker.",
         status: "in-progress",
         votes: 8,
-        reportedBy: "23ENG0112 (Hostel)"
+        reportedBy: "23ENG0112 (Hostel)",
+        image: null
       },
       {
         id: 2,
@@ -1014,27 +1096,73 @@
         description: "Water regulator valve stuck open causing overflow.",
         status: "pending",
         votes: 12,
-        reportedBy: "22CSE0991 (Hostel)"
-      },
-      {
-        id: 3,
-        title: "Bus stop light replacement",
-        category: "Electricity / AC",
-        location: "North Gate Shuttle Stop",
-        description: "Outdoor spotlight bulb burned out. Replaced with 40W LED.",
-        status: "resolved",
-        votes: 5,
-        reportedBy: "24BBA0014 (Day Scholar)"
+        reportedBy: "22CSE0991 (Hostel)",
+        image: null
       }
     ];
 
     let issues = JSON.parse(localStorage.getItem('campusfix_data')) || defaultData;
     let currentUser = JSON.parse(localStorage.getItem('campusfix_user')) || null;
 
+    // --- Image Upload & Compression ---
+    function handleImageSelected(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          // Compress via canvas (max dimension 800px) so localStorage doesn't overflow
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 800;
+
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          currentUploadedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+          const previewImg = document.getElementById('imagePreview');
+          const previewContainer = document.getElementById('imagePreviewContainer');
+          previewImg.src = currentUploadedImageBase64;
+          previewContainer.style.display = 'block';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImagePreview() {
+      currentUploadedImageBase64 = null;
+      document.getElementById('issuePhotoInput').value = '';
+      document.getElementById('imagePreview').src = '';
+      document.getElementById('imagePreviewContainer').style.display = 'none';
+    }
+
+    function openLightbox(imgSrc) {
+      document.getElementById('lightboxImg').src = imgSrc;
+      document.getElementById('lightboxModal').classList.add('active');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxModal').classList.remove('active');
+    }
+
     // --- Emergency Card Toggle ---
     function toggleEmergencyCard() {
-      const card = document.getElementById('emergencyCard');
-      card.classList.toggle('show');
+      document.getElementById('emergencyCard').classList.toggle('show');
     }
 
     // --- Authentication Handling ---
@@ -1163,7 +1291,15 @@
               <span class="item-title">${escapeHtml(item.title)}</span>
               <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
+            
             <p class="item-desc">${escapeHtml(item.description)}</p>
+
+            ${item.image ? `
+              <div class="item-attachment">
+                <img src="${item.image}" class="item-attachment-img" alt="Attached proof" onclick="openLightbox('${item.image}')">
+              </div>
+            ` : ''}
+
             <div class="item-footer">
               <div style="display:flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
                 <span class="meta-tag">📍 ${escapeHtml(item.location)}</span>
@@ -1227,6 +1363,7 @@
         category: document.getElementById('category').value,
         location: document.getElementById('location').value.trim(),
         description: document.getElementById('description').value.trim(),
+        image: currentUploadedImageBase64,
         status: 'pending',
         votes: 1,
         reportedBy: currentUser ? `${currentUser.collegeId} (${currentUser.residentType})` : 'Anonymous'
@@ -1235,6 +1372,7 @@
       issues.unshift(newIssue);
       saveAndRender();
       this.reset();
+      clearImagePreview();
     });
 
     // --- Analytics Logic ---
@@ -1300,3 +1438,4 @@
   </script>
 </body>
 </html>
+
