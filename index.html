@@ -175,13 +175,17 @@
     .auth-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(10, 25, 47, 0.9);
+      background: rgba(10, 25, 47, 0.85);
       backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       padding: 1rem;
+    }
+
+    .auth-overlay.hidden {
+      display: none;
     }
 
     .auth-modal {
@@ -221,18 +225,6 @@
       background: var(--bg-card);
       color: var(--sun-gold);
       border: 1px solid var(--navy-border);
-    }
-
-    .auth-error {
-      display: none;
-      background: rgba(239, 68, 68, 0.15);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      padding: 0.6rem 0.8rem;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      margin-bottom: 1rem;
-      text-align: center;
     }
 
     /* Portal Grid */
@@ -301,6 +293,7 @@
       min-height: 80px;
     }
 
+    /* File upload box */
     .file-upload-box {
       border: 2px dashed var(--navy-border);
       border-radius: 10px;
@@ -434,6 +427,7 @@
       line-height: 1.45;
     }
 
+    /* Feed card image */
     .item-attachment {
       margin-top: 0.3rem;
     }
@@ -445,6 +439,11 @@
       border-radius: 10px;
       border: 1px solid var(--navy-border);
       cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    .item-attachment-img:hover {
+      filter: brightness(1.1);
     }
 
     .item-footer {
@@ -654,7 +653,7 @@
       cursor: pointer;
     }
 
-    /* Emergency Floating Widget */
+    /* Floating Emergency Helpdesk */
     .emergency-wrapper {
       position: fixed;
       bottom: 1.75rem;
@@ -679,6 +678,11 @@
       align-items: center;
       gap: 0.5rem;
       transition: all 0.25s ease;
+    }
+
+    .emergency-trigger-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.5);
     }
 
     .pulse-dot {
@@ -753,6 +757,13 @@
       border-radius: 10px;
       border: 1px solid var(--navy-border);
       text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .emergency-item:hover {
+      border-color: var(--sun-amber);
+      background: rgba(17, 34, 64, 0.9);
+      transform: translateX(-2px);
     }
 
     .item-service {
@@ -783,7 +794,7 @@
 </head>
 <body>
 
-  <!-- Top Header -->
+  <!-- Top Navigation -->
   <header>
     <div class="nav-container">
       <a href="#" class="brand">
@@ -817,9 +828,7 @@
       <!-- Student Login Form -->
       <form id="studentLoginForm">
         <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Student Portal</h2>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Log campus issues directly to facility teams.</p>
-
-        <div id="studentError" class="auth-error">Invalid Student Email or Password!</div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Log campus issues directly to hostel & facility teams.</p>
 
         <div class="form-group">
           <label for="studCollegeId">College ID / Roll No</label>
@@ -828,7 +837,7 @@
 
         <div class="form-group">
           <label for="studEmail">College Email</label>
-          <input type="email" id="studEmail" placeholder="simpleminds@college.edu" required>
+          <input type="email" id="studEmail" placeholder="student@college.edu" required>
         </div>
 
         <div class="form-group">
@@ -907,6 +916,7 @@
             <input type="text" id="location" placeholder="e.g. Block C Room 204 or Lab 3" required>
           </div>
 
+          <!-- Photo Upload Field -->
           <div class="form-group">
             <label>Attach Photo of Issue (Optional)</label>
             <div class="file-upload-box" onclick="document.getElementById('issuePhotoInput').click()">
@@ -936,7 +946,9 @@
           <h2><span>📌</span> Ticket Feed</h2>
           <span id="feedCounter" style="font-size: 0.85rem; color: var(--text-muted);">0 issues</span>
         </div>
-        <div id="complaintsFeed" class="feed-container"></div>
+        <div id="complaintsFeed" class="feed-container">
+          <!-- Dynamically populated -->
+        </div>
       </section>
 
     </div>
@@ -1015,13 +1027,13 @@
     </div>
   </main>
 
-  <!-- Lightbox Modal -->
+  <!-- Lightbox Modal for Full Image View -->
   <div id="lightboxModal" class="lightbox-modal" onclick="closeLightbox()">
     <button class="lightbox-close" onclick="closeLightbox()">✕</button>
     <img id="lightboxImg" src="" alt="Full preview" onclick="event.stopPropagation()">
   </div>
 
-  <!-- Floating Emergency Widget -->
+  <!-- FLOATING EMERGENCY CONTACT WIDGET (BOTTOM-RIGHT) -->
   <div class="emergency-wrapper">
     <div id="emergencyCard" class="emergency-card">
       <div class="emergency-header">
@@ -1092,98 +1104,7 @@
     let issues = JSON.parse(localStorage.getItem('campusfix_data')) || defaultData;
     let currentUser = JSON.parse(localStorage.getItem('campusfix_user')) || null;
 
-    // --- Authentication & Explicit Modal Dismissal ---
-    function checkAuth() {
-      const overlay = document.getElementById('authModalOverlay');
-      const userPill = document.getElementById('currentUserPill');
-      const submitCard = document.getElementById('submitIssueCard');
-
-      if (!currentUser) {
-        overlay.style.display = 'flex';
-        userPill.style.display = 'none';
-      } else {
-        overlay.style.display = 'none'; // Directly hide modal
-        userPill.style.display = 'flex';
-        document.getElementById('roleBadge').innerText = currentUser.role;
-        document.getElementById('userDisplayName').innerText = currentUser.role === 'admin' 
-          ? `${currentUser.email.split('@')[0]} (${currentUser.block})`
-          : `${currentUser.collegeId} (${currentUser.residentType})`;
-
-        if (currentUser.role === 'admin') {
-          submitCard.style.display = 'none';
-        } else {
-          submitCard.style.display = 'block';
-        }
-      }
-    }
-
-    function switchAuthTab(type) {
-      const tabStudent = document.getElementById('tabStudent');
-      const tabAdmin = document.getElementById('tabAdmin');
-      const formStudent = document.getElementById('studentLoginForm');
-      const formAdmin = document.getElementById('adminLoginForm');
-      document.getElementById('studentError').style.display = 'none';
-
-      if (type === 'student') {
-        tabStudent.classList.add('active');
-        tabAdmin.classList.remove('active');
-        formStudent.style.display = 'block';
-        formAdmin.style.display = 'none';
-      } else {
-        tabAdmin.classList.add('active');
-        tabStudent.classList.remove('active');
-        formAdmin.style.display = 'block';
-        formStudent.style.display = 'none';
-      }
-    }
-
-    // STUDENT LOGIN HANDLER
-    document.getElementById('studentLoginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const inputEmail = document.getElementById('studEmail').value.trim().toLowerCase();
-      const inputPass = document.getElementById('studPassword').value.trim();
-      const studentError = document.getElementById('studentError');
-
-      // Check credentials (case-insensitive email)
-      if (inputEmail !== "simpleminds@college.edu" || inputPass !== "simpleminds") {
-        studentError.style.display = 'block';
-        return;
-      }
-
-      studentError.style.display = 'none';
-      currentUser = {
-        role: 'student',
-        collegeId: document.getElementById('studCollegeId').value.trim(),
-        email: inputEmail,
-        residentType: document.getElementById('studResidentType').value
-      };
-
-      localStorage.setItem('campusfix_user', JSON.stringify(currentUser));
-      checkAuth();
-      renderFeed();
-    });
-
-    // ADMIN LOGIN HANDLER
-    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      currentUser = {
-        role: 'admin',
-        email: document.getElementById('adminEmail').value.trim(),
-        block: document.getElementById('adminBlock').value
-      };
-      localStorage.setItem('campusfix_user', JSON.stringify(currentUser));
-      checkAuth();
-      renderFeed();
-    });
-
-    function logout() {
-      localStorage.removeItem('campusfix_user');
-      currentUser = null;
-      checkAuth();
-    }
-
-    // --- Image Handling ---
+    // --- Image Upload & Compression ---
     function handleImageSelected(input) {
       const file = input.files[0];
       if (!file) return;
@@ -1192,6 +1113,7 @@
       reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
+          // Compress via canvas (max dimension 800px) so localStorage doesn't overflow
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
@@ -1238,8 +1160,84 @@
       document.getElementById('lightboxModal').classList.remove('active');
     }
 
+    // --- Emergency Card Toggle ---
     function toggleEmergencyCard() {
       document.getElementById('emergencyCard').classList.toggle('show');
+    }
+
+    // --- Authentication Handling ---
+    function checkAuth() {
+      const overlay = document.getElementById('authModalOverlay');
+      const userPill = document.getElementById('currentUserPill');
+      const submitCard = document.getElementById('submitIssueCard');
+
+      if (!currentUser) {
+        overlay.classList.remove('hidden');
+        userPill.style.display = 'none';
+      } else {
+        overlay.classList.add('hidden');
+        userPill.style.display = 'flex';
+        document.getElementById('roleBadge').innerText = currentUser.role;
+        document.getElementById('userDisplayName').innerText = currentUser.role === 'admin' 
+          ? `${currentUser.email.split('@')[0]} (${currentUser.block})`
+          : `${currentUser.collegeId} (${currentUser.residentType})`;
+
+        if (currentUser.role === 'admin') {
+          submitCard.style.display = 'none';
+        } else {
+          submitCard.style.display = 'block';
+        }
+      }
+    }
+
+    function switchAuthTab(type) {
+      const tabStudent = document.getElementById('tabStudent');
+      const tabAdmin = document.getElementById('tabAdmin');
+      const formStudent = document.getElementById('studentLoginForm');
+      const formAdmin = document.getElementById('adminLoginForm');
+
+      if (type === 'student') {
+        tabStudent.classList.add('active');
+        tabAdmin.classList.remove('active');
+        formStudent.style.display = 'block';
+        formAdmin.style.display = 'none';
+      } else {
+        tabAdmin.classList.add('active');
+        tabStudent.classList.remove('active');
+        formAdmin.style.display = 'block';
+        formStudent.style.display = 'none';
+      }
+    }
+
+    document.getElementById('studentLoginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      currentUser = {
+        role: 'student',
+        collegeId: document.getElementById('studCollegeId').value.trim(),
+        email: document.getElementById('studEmail').value.trim(),
+        residentType: document.getElementById('studResidentType').value
+      };
+      localStorage.setItem('campusfix_user', JSON.stringify(currentUser));
+      checkAuth();
+      renderFeed();
+    });
+
+    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      currentUser = {
+        role: 'admin',
+        email: document.getElementById('adminEmail').value.trim(),
+        block: document.getElementById('adminBlock').value
+      };
+      localStorage.setItem('campusfix_user', JSON.stringify(currentUser));
+      checkAuth();
+      renderFeed();
+    });
+
+    function logout() {
+      localStorage.removeItem('campusfix_user');
+      currentUser = null;
+      checkAuth();
     }
 
     // --- Tab Switcher ---
@@ -1355,6 +1353,7 @@
       }
     }
 
+    // Submit Issue
     document.getElementById('issueForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -1376,6 +1375,7 @@
       clearImagePreview();
     });
 
+    // --- Analytics Logic ---
     function renderAnalytics() {
       const total = issues.length;
       const pending = issues.filter(i => i.status === 'pending').length;
@@ -1432,7 +1432,7 @@
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    // Initialize
+    // Startup
     checkAuth();
     saveAndRender();
   </script>
