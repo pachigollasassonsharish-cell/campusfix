@@ -3,275 +3,534 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CampusFix</title>
+  <title>CampusFix | Student Issue Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
-    
-    /* Top Navigation Bar */
+    :root {
+      --bg-dark: #0a192f;
+      --bg-card: #112240;
+      --bg-card-hover: #172a45;
+      --navy-border: #233554;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      /* Sun Yellow-Orange Accents */
+      --sun-amber: #f59e0b;
+      --sun-amber-hover: #d97706;
+      --sun-gold: #fbbf24;
+      --sun-glow: rgba(245, 158, 11, 0.15);
+      
+      --status-resolved: #10b981;
+      --status-pending: #f59e0b;
+      --status-progress: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(35, 53, 84, 0.5) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+
     header {
-      background: #1e293b;
-      color: white;
-      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--navy-border);
+      background: rgba(10, 25, 47, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 1rem 1.5rem;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .logo { font-size: 1.25rem; font-weight: 700; }
-    .logo span { color: #38bdf8; }
-    
-    .nav-tabs { display: flex; gap: 0.5rem; }
-    .tab-btn {
-      background: #334155;
-      color: white;
-      border: none;
-      padding: 0.45rem 0.85rem;
-      border-radius: 6px;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text-main);
+    }
+
+    .brand-accent {
+      color: var(--sun-gold);
+    }
+
+    .brand-icon {
+      background: linear-gradient(135deg, var(--sun-gold), var(--sun-amber));
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: var(--bg-dark);
+      font-weight: 900;
+      font-size: 1rem;
+    }
+
+    .main-layout {
+      max-width: 1200px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px -10px rgba(2, 12, 27, 0.7);
+    }
+
+    .card h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-main);
+    }
+
+    .card h2 span {
+      color: var(--sun-gold);
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
       font-size: 0.85rem;
       font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
     }
-    .tab-btn.active { background: #0284c7; }
 
-    /* Main Container */
-    .container { max-width: 600px; margin: 1.5rem auto; padding: 0 1rem; }
-    .card { background: white; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
-    
-    h2 { font-size: 1.2rem; margin-bottom: 0.25rem; }
-    p.subtext { font-size: 0.85rem; color: #64748b; margin-bottom: 1rem; }
-
-    /* Form Inputs */
-    label { display: block; font-size: 0.85rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; }
-    input, select, textarea { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: #0284c7; }
-    
-    .btn-submit {
+    input, select, textarea {
       width: 100%;
-      background: #0284c7;
-      color: white;
-      border: none;
-      padding: 0.75rem;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      margin-top: 1.25rem;
-      cursor: pointer;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+      background-color: rgba(10, 25, 47, 0.6);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
     }
 
-    /* Admin View */
-    .admin-stats { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-    .stat-box { flex: 1; background: #f1f5f9; padding: 0.75rem; border-radius: 6px; text-align: center; }
-    .stat-num { font-size: 1.2rem; font-weight: 700; color: #0284c7; }
-    .stat-lbl { font-size: 0.75rem; color: #64748b; }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--sun-amber);
+      box-shadow: 0 0 0 3px var(--sun-glow);
+    }
 
-    .ticket { border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; background: #fafafa; }
-    .ticket-header { display: flex; justify-content: space-between; align-items: baseline; }
-    .badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-    .badge.Pending { background: #fef3c7; color: #b45309; }
-    .badge.Resolved { background: #dcfce7; color: #166534; }
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
 
-    .ticket-meta { font-size: 0.8rem; color: #64748b; margin: 0.25rem 0; }
-    .ticket-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; margin: 0.5rem 0; border: 1px solid #cbd5e1; }
-    
-    .btn-toggle {
-      background: #e2e8f0;
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--sun-gold), var(--sun-amber));
+      color: #0b1526;
       border: none;
-      padding: 0.4rem 0.75rem;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-weight: 600;
+      padding: 0.85rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
       cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    .btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat-pill .num {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--sun-gold);
+    }
+
+    .stat-pill .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Complaints List */
+    .complaints-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .feed-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .complaint-item {
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .complaint-item:hover {
+      border-color: rgba(245, 158, 11, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .item-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--sun-amber);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-progress {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--status-progress);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .badge-resolved {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--status-resolved);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .item-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .meta-tag {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--navy-border);
+    }
+
+    .upvote-btn {
+      background: transparent;
+      border: 1px solid var(--navy-border);
+      color: var(--text-muted);
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .upvote-btn:hover {
+      border-color: var(--sun-amber);
+      color: var(--sun-gold);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
     }
   </style>
 </head>
 <body>
 
-  <!-- Navigation Bar -->
+  <!-- Top Navbar -->
   <header>
-    <div class="logo">Campus<span>Fix</span></div>
-    <div class="nav-tabs">
-      <button id="tab-student" class="tab-btn active" onclick="showPage('student')">Student Portal</button>
-      <button id="tab-admin" class="tab-btn" onclick="showPage('admin')">Admin Portal</button>
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <div class="brand-icon">CF</div>
+        Campus<span class="brand-accent">Fix</span>
+      </a>
+      <span style="font-size: 0.85rem; color: var(--text-muted);">Internal Issue Portal</span>
     </div>
   </header>
 
-  <div class="container">
+  <!-- Content -->
+  <main class="main-layout">
+    
+    <!-- Left Column: Submit Complaint -->
+    <section class="card">
+      <h2><span>⚡</span> Report an Issue</h2>
+      <form id="issueForm">
+        <div class="form-group">
+          <label for="title">Title / Problem summary</label>
+          <input type="text" id="title" placeholder="e.g. Water leak in Block B 2nd floor" required>
+        </div>
 
-    <!-- PAGE 1: STUDENT SUBMISSION -->
-    <div id="page-student">
-      <div class="card">
-        <h2>Report Campus Issue</h2>
-        <p class="subtext">Upload a picture of any broken equipment or maintenance issue.</p>
-
-        <form id="issueForm">
-          <label>Your Full Name</label>
-          <input type="text" id="name" required placeholder="e.g. Rahul Sharma" />
-
-          <label>Location Area</label>
-          <select id="location" required>
-            <option value="">Select location</option>
-            <option value="Hostel">Hostel / Dormitory</option>
-            <option value="Classroom">Classroom</option>
-            <option value="Laboratory">Laboratory</option>
-            <option value="Cafeteria">Cafeteria / Mess</option>
-            <option value="Library">Library</option>
-            <option value="Washroom">Washroom</option>
-            <option value="Other">Other Campus Area</option>
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select id="category" required>
+            <option value="Hostel & Facilities">Hostel & Facilities</option>
+            <option value="Electricity / AC">Electricity / AC</option>
+            <option value="Lab & IT Equipment">Lab & IT Equipment</option>
+            <option value="Cleanliness & Hygiene">Cleanliness & Hygiene</option>
+            <option value="Other">Other</option>
           </select>
-
-          <label>Specific Room / Block Number</label>
-          <input type="text" id="room" required placeholder="e.g. Block A, Room 204" />
-
-          <label>Issue Description</label>
-          <textarea id="desc" rows="3" required placeholder="Describe the problem in detail..."></textarea>
-
-          <label>Attach Photo Evidence</label>
-          <input type="file" id="photo" accept="image/*" required />
-
-          <button type="submit" class="btn-submit">Submit to Administration</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- PAGE 2: ADMIN DASHBOARD -->
-    <div id="page-admin" style="display: none;">
-      
-      <!-- Passcode prompt shown first -->
-      <div id="admin-auth" class="card">
-        <h2>Administrator Login</h2>
-        <p class="subtext">Enter the administrator access key to view complaints.</p>
-        <input type="password" id="adminKey" placeholder="Enter key (Default: admin123)" />
-        <button type="button" class="btn-submit" onclick="loginAdmin()">Verify & Open</button>
-      </div>
-
-      <!-- Dashboard content shown once authenticated -->
-      <div id="admin-dashboard" style="display: none;">
-        <div class="admin-stats">
-          <div class="stat-box">
-            <div class="stat-num" id="stat-total">0</div>
-            <div class="stat-lbl">Total</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-num" id="stat-pending" style="color: #b45309;">0</div>
-            <div class="stat-lbl">Pending</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-num" id="stat-resolved" style="color: #166534;">0</div>
-            <div class="stat-lbl">Resolved</div>
-          </div>
         </div>
 
-        <div class="card">
-          <h2>Active Reports</h2>
-          <div id="ticketsList" style="margin-top: 1rem;">
-            <p class="subtext">No complaints submitted yet.</p>
-          </div>
+        <div class="form-group">
+          <label for="location">Location / Room Number</label>
+          <input type="text" id="location" placeholder="e.g. Library 3rd Floor, Lab 4" required>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Detailed Description</label>
+          <textarea id="description" placeholder="Provide details to help the maintenance crew fix it faster..."></textarea>
+        </div>
+
+        <button type="submit" class="btn">Submit Ticket</button>
+      </form>
+    </section>
+
+    <!-- Right Column: Stats & Issues Feed -->
+    <section>
+      <!-- Stats Counters -->
+      <div class="stats-bar">
+        <div class="stat-pill">
+          <div class="num" id="statTotal">0</div>
+          <div class="label">Total Reported</div>
+        </div>
+        <div class="stat-pill">
+          <div class="num" id="statPending" style="color: var(--sun-amber);">0</div>
+          <div class="label">Pending</div>
+        </div>
+        <div class="stat-pill">
+          <div class="num" id="statResolved" style="color: var(--status-resolved);">0</div>
+          <div class="label">Resolved</div>
         </div>
       </div>
 
-    </div>
+      <!-- Feed Container -->
+      <div class="card">
+        <div class="complaints-header">
+          <h2><span>📌</span> Recent Reports</h2>
+          <span id="feedCounter" style="font-size: 0.85rem; color: var(--text-muted);">Showing 0 issues</span>
+        </div>
+        
+        <div id="complaintsFeed" class="feed-container">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
 
-  </div>
+  </main>
 
   <script>
-    let issues = JSON.parse(localStorage.getItem('cf_issues')) || [];
-    let isAdminUnlocked = false;
-
-    // View Switching
-    function showPage(page) {
-      document.getElementById('page-student').style.display = (page === 'student') ? 'block' : 'none';
-      document.getElementById('page-admin').style.display = (page === 'admin') ? 'block' : 'none';
-
-      document.getElementById('tab-student').classList.toggle('active', page === 'student');
-      document.getElementById('tab-admin').classList.toggle('active', page === 'admin');
-
-      if (page === 'admin' && isAdminUnlocked) {
-        renderAdminDashboard();
+    // Initial sample issues if storage is empty
+    const defaultData = [
+      {
+        id: 1,
+        title: "Projector not displaying HDMI output",
+        category: "Lab & IT Equipment",
+        location: "Seminar Hall 2",
+        description: "HDMI port is loose, flickering constantly during morning lectures.",
+        status: "in-progress",
+        votes: 8,
+        date: "Today"
+      },
+      {
+        id: 2,
+        title: "Water dispenser not cooling",
+        category: "Hostel & Facilities",
+        location: "Block C, 1st floor corridor",
+        description: "The cooler has been blowing warm air since yesterday afternoon.",
+        status: "pending",
+        votes: 14,
+        date: "Yesterday"
       }
+    ];
+
+    let issues = JSON.parse(localStorage.getItem('campusfix_data')) || defaultData;
+
+    function saveAndRender() {
+      localStorage.setItem('campusfix_data', JSON.stringify(issues));
+      renderFeed();
+      renderStats();
     }
 
-    // Passcode check
-    function loginAdmin() {
-      const pass = document.getElementById('adminKey').value;
-      if (pass === 'admin123') {
-        isAdminUnlocked = true;
-        document.getElementById('admin-auth').style.display = 'none';
-        document.getElementById('admin-dashboard').style.display = 'block';
-        renderAdminDashboard();
-      } else {
-        alert('Incorrect passcode! (Default is admin123)');
-      }
+    function renderStats() {
+      document.getElementById('statTotal').innerText = issues.length;
+      document.getElementById('statPending').innerText = issues.filter(i => i.status === 'pending').length;
+      document.getElementById('statResolved').innerText = issues.filter(i => i.status === 'resolved').length;
+      document.getElementById('feedCounter').innerText = `${issues.length} active tickets`;
     }
 
-    // Student Form Submission
-    document.getElementById('issueForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const file = document.getElementById('photo').files[0];
-      const reader = new FileReader();
-
-      reader.onload = function(evt) {
-        const item = {
-          id: Date.now(),
-          name: document.getElementById('name').value,
-          location: document.getElementById('location').value,
-          room: document.getElementById('room').value,
-          desc: document.getElementById('desc').value,
-          photo: evt.target.result,
-          status: 'Pending',
-          time: new Date().toLocaleDateString()
-        };
-
-        issues.unshift(item);
-        localStorage.setItem('cf_issues', JSON.stringify(issues));
-        alert('Complaint successfully sent to administration!');
-        document.getElementById('issueForm').reset();
-      };
-
-      if (file) {
-        reader.readAsDataURL(file);
-      }
-    });
-
-    // Admin Dashboard Render
-    function renderAdminDashboard() {
-      const list = document.getElementById('ticketsList');
-      const pendingCount = issues.filter(i => i.status === 'Pending').length;
-      const resolvedCount = issues.filter(i => i.status === 'Resolved').length;
-
-      document.getElementById('stat-total').innerText = issues.length;
-      document.getElementById('stat-pending').innerText = pendingCount;
-      document.getElementById('stat-resolved').innerText = resolvedCount;
-
+    function renderFeed() {
+      const container = document.getElementById('complaintsFeed');
       if (issues.length === 0) {
-        list.innerHTML = '<p class="subtext">No complaints submitted yet.</p>';
+        container.innerHTML = `<div class="empty-state">No campus complaints logged yet. Everything is quiet!</div>`;
         return;
       }
 
-      list.innerHTML = issues.map((item, idx) => `
-        <div class="ticket">
-          <div class="ticket-header">
-            <strong>${item.location} &bull; ${item.room}</strong>
-            <span class="badge ${item.status}">${item.status}</span>
+      container.innerHTML = issues.map((item) => {
+        let badgeClass = 'badge-pending';
+        let badgeLabel = 'Pending';
+        if (item.status === 'in-progress') {
+          badgeClass = 'badge-progress';
+          badgeLabel = 'In Progress';
+        } else if (item.status === 'resolved') {
+          badgeClass = 'badge-resolved';
+          badgeLabel = 'Resolved';
+        }
+
+        return `
+          <div class="complaint-item">
+            <div class="item-top">
+              <span class="item-title">${escapeHtml(item.title)}</span>
+              <span class="badge ${badgeClass}">${badgeLabel}</span>
+            </div>
+            <p class="item-desc">${escapeHtml(item.description)}</p>
+            <div class="item-footer">
+              <div style="display:flex; gap: 0.5rem; align-items: center;">
+                <span class="meta-tag">📍 ${escapeHtml(item.location)}</span>
+                <span class="meta-tag">🏷️ ${escapeHtml(item.category)}</span>
+              </div>
+              <button class="upvote-btn" onclick="upvote(${item.id})">
+                ▲ <span>${item.votes}</span>
+              </button>
+            </div>
           </div>
-          <div class="ticket-meta">Reported by ${item.name} on ${item.time}</div>
-          <p style="font-size: 0.9rem; margin: 0.5rem 0;">${item.desc}</p>
-          ${item.photo ? `<img src="${item.photo}" class="ticket-img" alt="Evidence" />` : ''}
-          <div style="margin-top: 0.5rem;">
-            <button class="btn-toggle" onclick="toggleStatus(${idx})">
-              Mark as ${item.status === 'Resolved' ? 'Pending' : 'Resolved'}
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
-    function toggleStatus(idx) {
-      issues[idx].status = issues[idx].status === 'Resolved' ? 'Pending' : 'Resolved';
-      localStorage.setItem('cf_issues', JSON.stringify(issues));
-      renderAdminDashboard();
+    function upvote(id) {
+      const target = issues.find(i => i.id === id);
+      if (target) {
+        target.votes += 1;
+        saveAndRender();
+      }
     }
+
+    document.getElementById('issueForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const newIssue = {
+        id: Date.now(),
+        title: document.getElementById('title').value.trim(),
+        category: document.getElementById('category').value,
+        location: document.getElementById('location').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        status: 'pending',
+        votes: 1,
+        date: "Just now"
+      };
+
+      issues.unshift(newIssue);
+      saveAndRender();
+      this.reset();
+    });
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // First paint
+    saveAndRender();
   </script>
 </body>
 </html>
