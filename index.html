@@ -227,6 +227,18 @@
       border: 1px solid var(--navy-border);
     }
 
+    .auth-error {
+      display: none;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
     /* Portal Grid */
     .portal-grid {
       display: grid;
@@ -427,7 +439,6 @@
       line-height: 1.45;
     }
 
-    /* Feed card image */
     .item-attachment {
       margin-top: 0.3rem;
     }
@@ -830,6 +841,8 @@
         <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Student Portal</h2>
         <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Log campus issues directly to hostel & facility teams.</p>
 
+        <div id="studentError" class="auth-error">Invalid Student Email or Password!</div>
+
         <div class="form-group">
           <label for="studCollegeId">College ID / Roll No</label>
           <input type="text" id="studCollegeId" placeholder="e.g. 23ENG0482" required>
@@ -837,7 +850,7 @@
 
         <div class="form-group">
           <label for="studEmail">College Email</label>
-          <input type="email" id="studEmail" placeholder="student@college.edu" required>
+          <input type="email" id="studEmail" placeholder="simpleminds@college.edu" required>
         </div>
 
         <div class="form-group">
@@ -1113,7 +1126,6 @@
       reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-          // Compress via canvas (max dimension 800px) so localStorage doesn't overflow
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
@@ -1195,6 +1207,8 @@
       const tabAdmin = document.getElementById('tabAdmin');
       const formStudent = document.getElementById('studentLoginForm');
       const formAdmin = document.getElementById('adminLoginForm');
+      const studentError = document.getElementById('studentError');
+      studentError.style.display = 'none';
 
       if (type === 'student') {
         tabStudent.classList.add('active');
@@ -1209,19 +1223,1503 @@
       }
     }
 
+    // STUDENT LOGIN (CREDENTIAL CHECK)
     document.getElementById('studentLoginForm').addEventListener('submit', function(e) {
       e.preventDefault();
+
+      const inputEmail = document.getElementById('studEmail').value.trim();
+      const inputPass = document.getElementById('studPassword').value.trim();
+      const studentError = document.getElementById('studentError');
+
+      // Check credentials
+      if (inputEmail !== "simpleminds@college.edu" || inputPass !== "simpleminds") {
+        studentError.style.display = 'block';
+        return;
+      }
+
+      studentError.style.display = 'none';
       currentUser = {
         role: 'student',
         collegeId: document.getElementById('studCollegeId').value.trim(),
-        email: document.getElementById('studEmail').value.trim(),
+        email: inputEmail,
         residentType: document.getElementById('studResidentType').value
+      };
+
+      localStorage.setItem('campusfix_user', JSON.stringify(currentUser));
+      checkAuth();
+      renderFeed();
+    });
+
+    // ADMIN LOGIN
+    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      currentUser = {
+        role: 'admin',
+        email: document.getElementById('adminEmail').value.trim(),
+        block: document.getElementById('adminBlock').value
       };
       localStorage.setItem('campusfix_user', JSON.stringify(currentUser));
       checkAuth();
       renderFeed();
     });
 
+    function logout() {
+      localStorage.removeItem('campusfix_user');
+      currentUser = null;
+      checkAuth();
+    }
+
+    // --- Tab Switcher ---
+    function switchView(target) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+
+      if (target === 'portal') {
+        document.getElementById('portalView').classList.add('active');
+        document.querySelectorAll('.nav-btn')[0].classList.add('active');
+      } else {
+        document.getElementById('statsView').classList.add('active');
+        document.querySelectorAll('.nav-btn')[1].classList.add('active');
+        renderAnalytics();
+      }
+    }
+
+    // --- Ticket & Feed Logic ---
+    function saveAndRender() {
+      localStorage.setItem('campusfix_data', JSON.stringify(issues));
+      renderFeed();
+      renderAnalytics();
+    }
+
+    function renderFeed() {
+      const container = document.getElementById('complaintsFeed');
+      document.getElementById('feedCounter').innerText = `${issues.length} tickets`;
+
+      if (issues.length === 0) {
+        container.innerHTML = `<div class="empty-state">No campus complaints logged yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = issues.map((item) => {
+        let badgeClass = 'badge-pending';
+        let badgeText = 'Pending';
+
+        if (item.status === 'in-progress') {
+          badgeClass = 'badge-progress';
+          badgeText = 'In Progress';
+        } else if (item.status === 'resolved') {
+          badgeClass = 'badge-resolved';
+          badgeText = 'Completed / Fixed';
+        }
+
+        const isAdmin = currentUser && currentUser.role === 'admin';
+
+        return `
+          <div class="complaint-item">
+            <div class="item-top">
+              <span class="item-title">${escapeHtml(item.title)}</span>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+            
+            <p class="item-desc">${escapeHtml(item.description)}</p>
+
+            ${item.image ? `
+              <div class="item-attachment">
+                <img src="${item.image}" class="item-attachment-img" alt="Attached proof" onclick="openLightbox('${item.image}')">
+              </div>
+            ` : ''}
+
+            <div class="item-footer">
+              <div style="display:flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                <span class="meta-tag">📍 ${escapeHtml(item.location)}</span>
+                <span class="meta-tag">🏷️ ${escapeHtml(item.category)}</span>
+                ${item.reportedBy ? `<span class="meta-tag">👤 ${escapeHtml(item.reportedBy)}</span>` : ''}
+              </div>
+
+              <div style="display:flex; gap: 0.5rem; align-items: center;">
+                ${isAdmin ? `
+                  <div class="admin-controls">
+                    <label style="margin:0; font-size: 0.75rem;">Status:</label>
+                    <select onchange="updateTicketStatus(${item.id}, this.value)">
+                      <option value="pending" ${item.status === 'pending' ? 'selected' : ''}>Pending</option>
+                      <option value="in-progress" ${item.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                      <option value="resolved" ${item.status === 'resolved' ? 'selected' : ''}>Completed</option>
+                    </select>
+                    <button class="btn-delete" title="Delete" onclick="deleteTicket(${item.id})">✕</button>
+                  </div>
+                ` : `
+                  <button class="upvote-btn" onclick="upvote(${item.id})">
+                    ▲ <span>${item.votes}</span>
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function upvote(id) {
+      const target = issues.find(i => i.id === id);
+      if (target) {
+        target.votes += 1;
+        saveAndRender();
+      }
+    }
+
+    function updateTicketStatus(id, newStatus) {
+      const target = issues.find(i => i.id === id);
+      if (target) {
+        target.status = newStatus;
+        saveAndRender();
+      }
+    }
+
+    function deleteTicket(id) {
+      if (confirm("Are you sure you want to remove this ticket?")) {
+        issues = issues.filter(i => i.id !== id);
+        saveAndRender();
+      }
+    }
+
+    // Submit Issue
+    document.getElementById('issueForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const newIssue = {
+        id: Date.now(),
+        title: document.getElementById('title').value.trim(),
+        category: document.getElementById('category').value,
+        location: document.getElementById('location').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        image: currentUploadedImageBase64,
+        status: 'pending',
+        votes: 1,
+        reportedBy: currentUser ? `${currentUser.collegeId} (${currentUser.residentType})` : 'Anonymous'
+      };
+
+      issues.unshift(newIssue);
+      saveAndRender();
+      this.reset();
+      clearImagePreview();
+    });
+
+    // --- Analytics Logic ---
+    function renderAnalytics() {
+      const total = issues.length;
+      const pending = issues.filter(i => i.status === 'pending').length;
+      const progress = issues.filter(i => i.status === 'in-progress').length;
+      const resolved = issues.filter(i => i.status === 'resolved').length;
+
+      document.getElementById('statsTotal').innerText = total;
+      document.getElementById('statsPending').innerText = pending;
+      document.getElementById('statsProgress').innerText = progress;
+      document.getElementById('statsResolved').innerText = resolved;
+
+      const calcPct = (count) => total === 0 ? 0 : Math.round((count / total) * 100);
+
+      const pPct = calcPct(pending);
+      const prPct = calcPct(progress);
+      const rPct = calcPct(resolved);
+
+      document.getElementById('pctPending').innerText = `${pPct}% (${pending})`;
+      document.getElementById('pctProgress').innerText = `${prPct}% (${progress})`;
+      document.getElementById('pctResolved').innerText = `${rPct}% (${resolved})`;
+
+      document.getElementById('barPending').style.width = `${pPct}%`;
+      document.getElementById('barProgress').style.width = `${prPct}%`;
+      document.getElementById('barResolved').style.width = `${rPct}%`;
+
+      const catCounts = {};
+      issues.forEach(i => {
+        catCounts[i.category] = (catCounts[i.category] || 0) + 1;
+      });
+
+      const catContainer = document.getElementById('categoryStatsContainer');
+      if (total === 0) {
+        catContainer.innerHTML = `<div class="empty-state" style="padding:1rem;">No category data</div>`;
+        return;
+      }
+
+      catContainer.innerHTML = Object.entries(catCounts).map(([cat, count]) => {
+        const pct = Math.round((count / total) * 100);
+        return `
+          <div class="bar-row">
+            <div class="bar-row-info">
+              <span>${escapeHtml(cat)}</span>
+              <span style="color: var(--sun-gold);">${count} (${pct}%)</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="background: var(--sun-amber); width: ${pct}%;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Startup
+    checkAuth();
+    saveAndRender();
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CampusFix | Student & Admin Issue Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a192f;
+      --bg-card: #112240;
+      --bg-card-hover: #172a45;
+      --navy-border: #233554;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      /* Sun Yellow-Orange Accents */
+      --sun-amber: #f59e0b;
+      --sun-gold: #fbbf24;
+      --sun-glow: rgba(245, 158, 11, 0.15);
+      
+      --status-resolved: #10b981;
+      --status-pending: #f59e0b;
+      --status-progress: #38bdf8;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(35, 53, 84, 0.5) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid var(--navy-border);
+      background: rgba(10, 25, 47, 0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0.85rem 1.5rem;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text-main);
+    }
+
+    .brand-accent {
+      color: var(--sun-gold);
+    }
+
+    .brand-icon {
+      background: linear-gradient(135deg, var(--sun-gold), var(--sun-amber));
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: var(--bg-dark);
+      font-weight: 900;
+      font-size: 1rem;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.35rem;
+      background: rgba(17, 34, 64, 0.6);
+      padding: 0.3rem;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn.active {
+      background: var(--bg-card);
+      color: var(--sun-gold);
+      border: 1px solid var(--navy-border);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      padding: 0.4rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+    }
+
+    .user-role-tag {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--sun-gold);
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-left: 0.3rem;
+    }
+
+    /* Views */
+    .view-panel {
+      display: none;
+      max-width: 1200px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1.5rem 6rem;
+    }
+
+    .view-panel.active {
+      display: block;
+    }
+
+    /* Login Modal Overlay */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 25, 47, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+
+    .auth-overlay.hidden {
+      display: none;
+    }
+
+    .auth-modal {
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 460px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .auth-switcher {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      background: rgba(10, 25, 47, 0.8);
+      padding: 0.3rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--navy-border);
+    }
+
+    .auth-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.6rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .auth-tab.active {
+      background: var(--bg-card);
+      color: var(--sun-gold);
+      border: 1px solid var(--navy-border);
+    }
+
+    .auth-error {
+      display: none;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    /* Portal Grid */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    @media (max-width: 950px) {
+      .portal-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px -10px rgba(2, 12, 27, 0.7);
+    }
+
+    .card h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-main);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+      background-color: rgba(10, 25, 47, 0.7);
+      color: var(--text-main);
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--sun-amber);
+      box-shadow: 0 0 0 3px var(--sun-glow);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* File upload box */
+    .file-upload-box {
+      border: 2px dashed var(--navy-border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(10, 25, 47, 0.4);
+      transition: border-color 0.2s ease;
+    }
+
+    .file-upload-box:hover {
+      border-color: var(--sun-amber);
+    }
+
+    .image-preview-container {
+      display: none;
+      margin-top: 0.75rem;
+      position: relative;
+    }
+
+    .preview-thumb {
+      width: 100%;
+      max-height: 160px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--navy-border);
+    }
+
+    .remove-img-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(10, 25, 47, 0.85);
+      color: var(--danger);
+      border: 1px solid var(--navy-border);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--sun-gold), var(--sun-amber));
+      color: #0b1526;
+      border: none;
+      padding: 0.85rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    .btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    /* Feed Components */
+    .complaints-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .feed-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .complaint-item {
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .item-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--status-pending);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-progress {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--status-progress);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .badge-resolved {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--status-resolved);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .item-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .item-attachment {
+      margin-top: 0.3rem;
+    }
+
+    .item-attachment-img {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+      cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    .item-attachment-img:hover {
+      filter: brightness(1.1);
+    }
+
+    .item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .meta-tag {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--navy-border);
+    }
+
+    .admin-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(10, 25, 47, 0.6);
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      border: 1px dashed var(--navy-border);
+    }
+
+    .admin-controls select {
+      width: auto;
+      padding: 0.2rem 0.4rem;
+      font-size: 0.75rem;
+      border-radius: 6px;
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.2rem;
+    }
+
+    .upvote-btn {
+      background: transparent;
+      border: 1px solid var(--navy-border);
+      color: var(--text-muted);
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.8rem;
+    }
+
+    .upvote-btn:hover {
+      border-color: var(--sun-amber);
+      color: var(--sun-gold);
+    }
+
+    /* Stats */
+    .stats-header-banner {
+      margin-bottom: 2rem;
+    }
+
+    .stats-header-banner h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .stats-header-banner p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .stats-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+    }
+
+    .stat-box.total::before { background: var(--text-muted); }
+    .stat-box.pending::before { background: var(--status-pending); }
+    .stat-box.progress::before { background: var(--status-progress); }
+    .stat-box.resolved::before { background: var(--status-resolved); }
+
+    .stat-box .title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .stat-box .value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-top: 0.4rem;
+    }
+
+    .stat-box .subtext {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+
+    .analytics-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 800px) {
+      .analytics-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .bar-row {
+      margin-bottom: 1.25rem;
+    }
+
+    .bar-row-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .progress-track {
+      background: rgba(10, 25, 47, 0.7);
+      border-radius: 8px;
+      height: 10px;
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--navy-border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.4s ease;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    /* Lightbox Modal */
+    .lightbox-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 25, 47, 0.95);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .lightbox-modal.active {
+      display: flex;
+    }
+
+    .lightbox-modal img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 12px;
+      border: 1px solid var(--navy-border);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 2rem;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 2rem;
+      cursor: pointer;
+    }
+
+    /* Floating Emergency Helpdesk */
+    .emergency-wrapper {
+      position: fixed;
+      bottom: 1.75rem;
+      right: 1.75rem;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .emergency-trigger-btn {
+      background: linear-gradient(135deg, var(--sun-gold), var(--sun-amber));
+      color: #0a192f;
+      border: none;
+      border-radius: 50px;
+      padding: 0.8rem 1.3rem;
+      font-weight: 800;
+      font-size: 0.9rem;
+      box-shadow: 0 10px 25px rgba(245, 158, 11, 0.35);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s ease;
+    }
+
+    .emergency-trigger-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.5);
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #ef4444;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      animation: pulse-ring 1.8s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 9px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .emergency-card {
+      display: none;
+      width: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--sun-amber);
+      border-radius: 18px;
+      padding: 1.25rem;
+      box-shadow: 0 20px 45px rgba(2, 12, 27, 0.85);
+      margin-bottom: 0.85rem;
+    }
+
+    .emergency-card.show {
+      display: block;
+    }
+
+    .emergency-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.85rem;
+      border-bottom: 1px solid var(--navy-border);
+      padding-bottom: 0.5rem;
+    }
+
+    .emergency-header h3 {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--sun-gold);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .emergency-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .emergency-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .emergency-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(10, 25, 47, 0.7);
+      padding: 0.6rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .emergency-item:hover {
+      border-color: var(--sun-amber);
+      background: rgba(17, 34, 64, 0.9);
+      transform: translateX(-2px);
+    }
+
+    .item-service {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .item-service .name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .item-service .desc {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .item-number {
+      color: var(--sun-gold);
+      font-weight: 800;
+      font-size: 0.9rem;
+      background: rgba(245, 158, 11, 0.15);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <div class="brand-icon">CF</div>
+        Campus<span class="brand-accent">Fix</span>
+      </a>
+
+      <div class="nav-right">
+        <nav class="nav-tabs">
+          <button class="nav-btn active" onclick="switchView('portal')">Tickets</button>
+          <button class="nav-btn" onclick="switchView('stats')">Analytics & Stats</button>
+        </nav>
+
+        <div id="currentUserPill" class="user-pill" style="display: none;">
+          <span id="roleBadge" class="user-role-tag">Role</span>
+          <span id="userDisplayName" style="font-weight: 600;">user</span>
+          <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Login Modal Overlay -->
+  <div id="authModalOverlay" class="auth-overlay">
+    <div class="auth-modal">
+      <div class="auth-switcher">
+        <button class="auth-tab active" id="tabStudent" onclick="switchAuthTab('student')">Student Login</button>
+        <button class="auth-tab" id="tabAdmin" onclick="switchAuthTab('admin')">Admin Login</button>
+      </div>
+
+      <!-- Student Login Form -->
+      <form id="studentLoginForm">
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Student Portal</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Log campus issues directly to hostel & facility teams.</p>
+
+        <div id="studentError" class="auth-error">Invalid Student Email or Password!</div>
+
+        <div class="form-group">
+          <label for="studCollegeId">College ID / Roll No</label>
+          <input type="text" id="studCollegeId" placeholder="e.g. 23ENG0482" required>
+        </div>
+
+        <div class="form-group">
+          <label for="studEmail">College Email</label>
+          <input type="email" id="studEmail" placeholder="simpleminds@college.edu" required>
+        </div>
+
+        <div class="form-group">
+          <label for="studResidentType">Resident Status</label>
+          <select id="studResidentType" required>
+            <option value="Hostel">Hostel Resident</option>
+            <option value="Day Scholar">Day Scholar</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="studPassword">Password</label>
+          <input type="password" id="studPassword" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn" style="margin-top: 1rem;">Login as Student</button>
+      </form>
+
+      <!-- Administrator Login Form -->
+      <form id="adminLoginForm" style="display: none;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--sun-gold);">Administrator Sign-In</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Triage, assign, and update ticket lifecycle status.</p>
+
+        <div class="form-group">
+          <label for="adminEmail">Admin Email</label>
+          <input type="email" id="adminEmail" placeholder="admin.maintenance@college.edu" required>
+        </div>
+
+        <div class="form-group">
+          <label for="adminBlock">Block Incharge</label>
+          <select id="adminBlock" required>
+            <option value="Block A (Academic)">Block A (Academic)</option>
+            <option value="Block B (Laboratories)">Block B (Laboratories)</option>
+            <option value="Block C (Hostels)">Block C (Hostels)</option>
+            <option value="Block D (Library & Sports)">Block D (Library & Sports)</option>
+            <option value="Campus-wide Facilities">Campus-wide Facilities</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="adminPassword">Password</label>
+          <input type="password" id="adminPassword" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn" style="margin-top: 1rem;">Login as Admin</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- VIEW 1: Main Tickets / Complaint Form -->
+  <main id="portalView" class="view-panel active">
+    <div class="portal-grid">
+      
+      <!-- Issue Form with Photo Upload -->
+      <section class="card" id="submitIssueCard">
+        <h2><span>⚡</span> Report an Issue</h2>
+        <form id="issueForm">
+          <div class="form-group">
+            <label for="title">Problem Summary</label>
+            <input type="text" id="title" placeholder="e.g. Water leak in Block B 2nd floor" required>
+          </div>
+
+          <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" required>
+              <option value="Hostel & Facilities">Hostel & Facilities</option>
+              <option value="Electricity / AC">Electricity / AC</option>
+              <option value="Lab & IT Equipment">Lab & IT Equipment</option>
+              <option value="Cleanliness & Hygiene">Cleanliness & Hygiene</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="location">Location / Room</label>
+            <input type="text" id="location" placeholder="e.g. Block C Room 204 or Lab 3" required>
+          </div>
+
+          <!-- Photo Upload Field -->
+          <div class="form-group">
+            <label>Attach Photo of Issue (Optional)</label>
+            <div class="file-upload-box" onclick="document.getElementById('issuePhotoInput').click()">
+              <span style="font-size: 1.3rem;">📷</span>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Click to snap a picture or upload</p>
+              <input type="file" id="issuePhotoInput" accept="image/*" style="display: none;" onchange="handleImageSelected(this)">
+            </div>
+            
+            <div id="imagePreviewContainer" class="image-preview-container">
+              <img id="imagePreview" class="preview-thumb" alt="Preview">
+              <button type="button" class="remove-img-btn" onclick="clearImagePreview()">✕ Remove</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Detailed Description</label>
+            <textarea id="description" placeholder="Specify details to help resolve the issue..."></textarea>
+          </div>
+
+          <button type="submit" class="btn">Submit Ticket</button>
+        </form>
+      </section>
+
+      <!-- Issues Feed -->
+      <section class="card">
+        <div class="complaints-header">
+          <h2><span>📌</span> Ticket Feed</h2>
+          <span id="feedCounter" style="font-size: 0.85rem; color: var(--text-muted);">0 issues</span>
+        </div>
+        <div id="complaintsFeed" class="feed-container">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- VIEW 2: Dedicated Statistics Page -->
+  <main id="statsView" class="view-panel">
+    <div class="stats-header-banner">
+      <h1>Campus Analytics & Resolution Rates</h1>
+      <p>Real-time status overview of reported issues, progress, and completed maintenance tasks.</p>
+    </div>
+
+    <div class="stats-grid-4">
+      <div class="stat-box total">
+        <div class="title">Total Reported</div>
+        <div class="value" id="statsTotal">0</div>
+        <div class="subtext">All submitted complaints</div>
+      </div>
+      <div class="stat-box pending">
+        <div class="title">Pending Review</div>
+        <div class="value" id="statsPending" style="color: var(--status-pending);">0</div>
+        <div class="subtext">Awaiting team triage</div>
+      </div>
+      <div class="stat-box progress">
+        <div class="title">In Progress</div>
+        <div class="value" id="statsProgress" style="color: var(--status-progress);">0</div>
+        <div class="subtext">Under active maintenance</div>
+      </div>
+      <div class="stat-box resolved">
+        <div class="title">Completed / Fixed</div>
+        <div class="value" id="statsResolved" style="color: var(--status-resolved);">0</div>
+        <div class="subtext">Successfully closed tickets</div>
+      </div>
+    </div>
+
+    <div class="analytics-split">
+      <div class="card">
+        <h2><span>📊</span> Lifecycle Breakdown</h2>
+        <div style="margin-top: 1.5rem;">
+          <div class="bar-row">
+            <div class="bar-row-info">
+              <span>Completed / Fixed</span>
+              <span id="pctResolved">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="barResolved" class="progress-fill" style="background: var(--status-resolved); width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="bar-row">
+            <div class="bar-row-info">
+              <span>In Progress</span>
+              <span id="pctProgress">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="barProgress" class="progress-fill" style="background: var(--status-progress); width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="bar-row">
+            <div class="bar-row-info">
+              <span>Pending</span>
+              <span id="pctPending">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="barPending" class="progress-fill" style="background: var(--status-pending); width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span>🏷️</span> Issues by Category</h2>
+        <div id="categoryStatsContainer" style="margin-top: 1.5rem;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Lightbox Modal for Full Image View -->
+  <div id="lightboxModal" class="lightbox-modal" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="Full preview" onclick="event.stopPropagation()">
+  </div>
+
+  <!-- FLOATING EMERGENCY CONTACT WIDGET (BOTTOM-RIGHT) -->
+  <div class="emergency-wrapper">
+    <div id="emergencyCard" class="emergency-card">
+      <div class="emergency-header">
+        <h3><span>🚨</span> Emergency Helplines</h3>
+        <button class="emergency-close" onclick="toggleEmergencyCard()">✕</button>
+      </div>
+      <div class="emergency-list">
+        <a href="tel:9111223344" class="emergency-item">
+          <div class="item-service">
+            <span class="name">Campus Security</span>
+            <span class="desc">Main Gate & Patrol (24/7)</span>
+          </div>
+          <span class="item-number">📞 +91 91112 23344</span>
+        </a>
+
+        <a href="tel:108" class="emergency-item">
+          <div class="item-service">
+            <span class="name">Campus Health / Ambulance</span>
+            <span class="desc">First Aid & Paramedics</span>
+          </div>
+          <span class="item-number">📞 108 / 102</span>
+        </a>
+
+        <a href="tel:112" class="emergency-item">
+          <div class="item-service">
+            <span class="name">National Emergency Support</span>
+            <span class="desc">Police, Fire & Medical (ERSS)</span>
+          </div>
+          <span class="item-number">📞 112</span>
+        </a>
+      </div>
+    </div>
+
+    <button class="emergency-trigger-btn" onclick="toggleEmergencyCard()">
+      <span class="pulse-dot"></span>
+      <span>🚨 Emergency Contact</span>
+    </button>
+  </div>
+
+  <script>
+    let currentUploadedImageBase64 = null;
+
+    const defaultData = [
+      {
+        id: 1,
+        title: "Projector flickering in Seminar Hall",
+        category: "Lab & IT Equipment",
+        location: "Block B, Hall 2",
+        description: "HDMI cord connector is damaged causing screen flicker.",
+        status: "in-progress",
+        votes: 8,
+        reportedBy: "23ENG0112 (Hostel)",
+        image: null
+      },
+      {
+        id: 2,
+        title: "Cold water faucet jammed",
+        category: "Hostel & Facilities",
+        location: "Block C, 2nd Floor",
+        description: "Water regulator valve stuck open causing overflow.",
+        status: "pending",
+        votes: 12,
+        reportedBy: "22CSE0991 (Hostel)",
+        image: null
+      }
+    ];
+
+    let issues = JSON.parse(localStorage.getItem('campusfix_data')) || defaultData;
+    let currentUser = JSON.parse(localStorage.getItem('campusfix_user')) || null;
+
+    // --- Image Upload & Compression ---
+    function handleImageSelected(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 800;
+
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          currentUploadedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+          const previewImg = document.getElementById('imagePreview');
+          const previewContainer = document.getElementById('imagePreviewContainer');
+          previewImg.src = currentUploadedImageBase64;
+          previewContainer.style.display = 'block';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImagePreview() {
+      currentUploadedImageBase64 = null;
+      document.getElementById('issuePhotoInput').value = '';
+      document.getElementById('imagePreview').src = '';
+      document.getElementById('imagePreviewContainer').style.display = 'none';
+    }
+
+    function openLightbox(imgSrc) {
+      document.getElementById('lightboxImg').src = imgSrc;
+      document.getElementById('lightboxModal').classList.add('active');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxModal').classList.remove('active');
+    }
+
+    // --- Emergency Card Toggle ---
+    function toggleEmergencyCard() {
+      document.getElementById('emergencyCard').classList.toggle('show');
+    }
+
+    // --- Authentication Handling ---
+    function checkAuth() {
+      const overlay = document.getElementById('authModalOverlay');
+      const userPill = document.getElementById('currentUserPill');
+      const submitCard = document.getElementById('submitIssueCard');
+
+      if (!currentUser) {
+        overlay.classList.remove('hidden');
+        userPill.style.display = 'none';
+      } else {
+        overlay.classList.add('hidden');
+        userPill.style.display = 'flex';
+        document.getElementById('roleBadge').innerText = currentUser.role;
+        document.getElementById('userDisplayName').innerText = currentUser.role === 'admin' 
+          ? `${currentUser.email.split('@')[0]} (${currentUser.block})`
+          : `${currentUser.collegeId} (${currentUser.residentType})`;
+
+        if (currentUser.role === 'admin') {
+          submitCard.style.display = 'none';
+        } else {
+          submitCard.style.display = 'block';
+        }
+      }
+    }
+
+    function switchAuthTab(type) {
+      const tabStudent = document.getElementById('tabStudent');
+      const tabAdmin = document.getElementById('tabAdmin');
+      const formStudent = document.getElementById('studentLoginForm');
+      const formAdmin = document.getElementById('adminLoginForm');
+      const studentError = document.getElementById('studentError');
+      studentError.style.display = 'none';
+
+      if (type === 'student') {
+        tabStudent.classList.add('active');
+        tabAdmin.classList.remove('active');
+        formStudent.style.display = 'block';
+        formAdmin.style.display = 'none';
+      } else {
+        tabAdmin.classList.add('active');
+        tabStudent.classList.remove('active');
+        formAdmin.style.display = 'block';
+        formStudent.style.display = 'none';
+      }
+    }
+
+    // STUDENT LOGIN (CREDENTIAL CHECK)
+    document.getElementById('studentLoginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const inputEmail = document.getElementById('studEmail').value.trim();
+      const inputPass = document.getElementById('studPassword').value.trim();
+      const studentError = document.getElementById('studentError');
+
+      // Check credentials
+      if (inputEmail !== "simpleminds@college.edu" || inputPass !== "simpleminds") {
+        studentError.style.display = 'block';
+        return;
+      }
+
+      studentError.style.display = 'none';
+      currentUser = {
+        role: 'student',
+        collegeId: document.getElementById('studCollegeId').value.trim(),
+        email: inputEmail,
+        residentType: document.getElementById('studResidentType').value
+      };
+
+      localStorage.setItem('campusfix_user', JSON.stringify(currentUser));
+      checkAuth();
+      renderFeed();
+    });
+
+    // ADMIN LOGIN
     document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
       e.preventDefault();
       currentUser = {
